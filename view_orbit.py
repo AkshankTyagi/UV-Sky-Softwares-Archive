@@ -61,32 +61,61 @@ def read_satellite_TLE(filename= sat_file, sat_name = 'ISS'):
     return line1, line2
 
 # get celestial coordinates of Sun, Moon
-def get_celestial_positions(time_arr):
+# def get_celestial_positions(time_arr):
     # Load ephemeris data
     
+    # eph = load('de421.bsp') # Use DE440 for the best balance of accuracy, timespan, and size.
+    # earth, sun, moon = eph['earth'], eph['sun'], eph['moon']
+
+    # solar = []
+    # lunar = []
+    # for time in time_arr:
+    #     # Calculate the position of the Sun relative to Earth at the given time
+    #     astrometric_sun = earth.at(time).observe(sun)
+    #     apparent_sun = astrometric_sun.apparent()
+    #     ra_sun, dec_sun, _ = apparent_sun.radec()
+
+    #     # Calculate the position of the Moon relative to Earth at the given time
+    #     astrometric_moon = earth.at(time).observe(moon)
+    #     apparent_moon = astrometric_moon.apparent()
+    #     ra_moon, dec_moon, _ = apparent_moon.radec()
+
+    #     solar.append((ra_sun.hours- 1/60, dec_sun.degrees +4/60))
+    #     lunar.append((ra_moon.hours -8/60, dec_moon.degrees))
+
+    # return {
+    #     "sun": solar,
+    #     "moon": lunar
+    # }
+
+def get_celestial_positions(time_arr):
+    # Load ephemeris
     eph = load('de421.bsp')
     earth, sun, moon = eph['earth'], eph['sun'], eph['moon']
 
-    solar = []
-    lunar = []
-    for time in time_arr:
-        # Calculate the position of the Sun relative to Earth at the given time
-        astrometric_sun = earth.at(time).observe(sun)
-        apparent_sun = astrometric_sun.apparent()
-        ra_sun, dec_sun, _ = apparent_sun.radec()
+    # Observe Sun and Moon from Earth for all times at once
+    astrometric_sun = earth.at(time_arr).observe(sun).apparent()
+    astrometric_moon = earth.at(time_arr).observe(moon).apparent()
 
-        # Calculate the position of the Moon relative to Earth at the given time
-        astrometric_moon = earth.at(time).observe(moon)
-        apparent_moon = astrometric_moon.apparent()
-        ra_moon, dec_moon, _ = apparent_moon.radec()
+    # Get RA, Dec
+    ra_sun, dec_sun, _ = astrometric_sun.radec()
+    ra_moon, dec_moon, _ = astrometric_moon.radec()
 
-        solar.append((ra_sun.hours- 1/60, dec_sun.degrees +4/60))
-        lunar.append((ra_moon.hours -8/60, dec_moon.degrees))
+    # Apply any empirical offsets (adjust if necessary)
+    solar = np.column_stack([
+        ra_sun.hours - 1/60,       # Subtract 1 minute in RA
+        dec_sun.degrees + 4/60     # Add 4 arcminutes in Dec
+    ])
+    lunar = np.column_stack([
+        ra_moon.hours - 8/60,      # Subtract 8 minutes in RA
+        dec_moon.degrees           # Keep Dec as is
+    ])
 
     return {
         "sun": solar,
         "moon": lunar
     }
+
 
 # get satellite object from TLE (2 lines data)
 def get_satellite(line1, line2):

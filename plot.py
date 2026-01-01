@@ -13,7 +13,7 @@ from matplotlib.figure import Figure
 from configparser import ConfigParser
 
 from star_spectrum import * 
-from star_spectrum import GET_STAR_TEMP
+from star_spectrum import GET_STAR_TEMP 
 from Params_configparser import get_folder_loc
 
 folder_loc, params_file = get_folder_loc()
